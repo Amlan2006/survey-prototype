@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey DApp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a1a1aa;
+            margin-bottom: 2rem;
+        }
+
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(96, 165, 250, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #f8fafc;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #d1d5db;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #6b7280;
+        }
+
+        textarea.form-input {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .question-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #60a5fa;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: translateX(4px);
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #f8fafc;
+        }
+
+        .question-id {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .response-item {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #10b981;
+        }
+
+        .participant-address {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .response-text {
+            color: #f8fafc;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #6b7280;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(96, 165, 250, 0.3);
+            border-top: 2px solid #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Survey DApp</h1>
+            <p>Decentralized survey platform on blockchain</p>
+            <div class="wallet-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="walletStatus">Wallet not connected</span>
+                <button class="btn btn-secondary" id="connectWallet">Connect Wallet</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="participate">Participate</div>
+            <div class="tab" data-tab="create">Create Survey</div>
+            <div class="tab" data-tab="manage">Manage Surveys</div>
+        </div>
+
+        <!-- Participate Tab -->
+        <div class="tab-content active" id="participate">
+            <div class="card">
+                <h2>🗳️ Participate in Survey</h2>
+                <div id="questionsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading surveys...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Survey Tab -->
+        <div class="tab-content" id="create">
+            <div class="card">
+                <h2>📝 Create New Survey</h2>
+                <form id="createSurveyForm">
+                    <div class="form-group">
+                        <label for="surveyQuestion">Survey Question</label>
+                        <textarea 
+                            class="form-input" 
+                            id="surveyQuestion" 
+                            placeholder="Enter your survey question here..."
+                            required
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Survey</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manage Surveys Tab -->
+        <div class="tab-content" id="manage">
+            <div class="grid">
+                <div class="card">
+                    <h2>👥 Survey Responses</h2>
+                    <div id="responsesContainer">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading responses...
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>📊 Survey Statistics</h2>
+                    <div id="statsContainer">
+                        <p>Total Participants: <span id="totalParticipants">-</span></p>
+                        <p>Total Surveys: <span id="totalSurveys">-</span></p>
+                        <p>Contract Owner: <span id="contractOwner">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contract configuration
+        const CONTRACT_ADDRESS = "0x8464135c8F25Da09e49BC8782676a84730C318bC";
+        const CONTRACT_ABI = [
+            {
+                "type": "constructor",
+                "inputs": [],
+                "stateMutability": "nonpayable"
+            },
+            {
+                "type": "function",
+                "name": "createSurvey",
+                "inputs": [{"name": "question", "type": "string", "internalType": "string"}],
+                "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+                "stateMutability": "nonpayable"
+            },
+            {
+                "type": "function",
+                "name": "getParticipants",
+                "inputs": [],
+                "outputs": [{"name": "", "type": "address[]", "internalType": "address[]"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "getQuestions",
+                "inputs": [],
+                "outputs": [{"name": "", "type": "string[]", "internalType": "string[]"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "getResponseOfParticipant",
+                "inputs": [{"name": "participant", "type": "address", "internalType": "address"}],
+                "outputs": [{"name": "", "type": "string", "internalType": "string"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "getResponseQuestionAnswer",
+                "inputs": [{"name": "_questionId", "type": "uint256", "internalType": "uint256"}],
+                "outputs": [{"name": "", "type": "string", "internalType": "string"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "hasParticipated",
+                "inputs": [{"name": "", "type": "address", "internalType": "address"}],
+                "outputs": [{"name": "", "type": "bool", "internalType": "bool"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "participate",
+                "inputs": [
+                    {"name": "response", "type": "string", "internalType": "string"},
+                    {"name": "_questionId", "type": "uint256", "internalType": "uint256"}
+                ],
+                "outputs": [],
+                "stateMutability": "nonpayable"
+            },
+            {
+                "type": "function",
+                "name": "owner",
+                "inputs": [],
+                "outputs": [{"name": "", "type": "address", "internalType": "address"}],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "totalParticipants",
+                "inputs": [],
+                "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+                "stateMutability": "view"
+            }
+        ];
+
+        // Global variables
+        let provider, signer, contract, userAccount;
+
+        // Initialize the app
+        async function init() {
+            setupEventListeners();
+            if (window.ethereum) {
+                await checkConnection();
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+
+            // Connect wallet
+            document.getElementById('connectWallet').addEventListener('click', connectWallet);
+
+            // Create survey form
+            document.getElementById('createSurveyForm').addEventListener('submit', createSurvey);
+
+            // Auto-refresh data when switching tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (contract) {
+                        setTimeout(loadData, 100);
+                    }
+                });
+            });
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Check if wallet is already connected
+        async function checkConnection() {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    await setupProvider();
+                    updateWalletStatus(true, accounts[0]);
+                }
+            } catch (error) {
+                console.error('Error checking connection:', error);
+            }
+        }
+
+        // Connect wallet
+        async function connectWallet() {
+            if (!window.ethereum) {
+                showError('Please install MetaMask or another Web3 wallet!');
+                return;
+            }
+
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                await setupProvider();
+                updateWalletStatus(true, userAccount);
+                await loadData();
+                showSuccess('Wallet connected successfully!');
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError('Failed to connect wallet: ' + error.message);
+            }
+        }
+
+        // Setup provider and contract
+        async function setupProvider() {
+            provider = new ethers.BrowserProvider(window.ethereum);
+            signer = await provider.getSigner();
+            userAccount = await signer.getAddress();
+            
+            if (CONTRACT_ADDRESS !== "YOUR_CONTRACT_ADDRESS_HERE") {
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            }
+        }
+
+        // Update wallet status
+        function updateWalletStatus(connected, address) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const walletStatus = document.getElementById('walletStatus');
+            const connectButton = document.getElementById('connectWallet');
+
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                walletStatus.textContent = `Connected: ${address.slice(0, 6)}...${address.slice(-4)}`;
+                connectButton.style.display = 'none';
+            } else {
+                statusIndicator.classList.remove('connected');
+                walletStatus.textContent = 'Wallet not connected';
+                connectButton.style.display = 'inline-block';
+            }
+        }
+
+        // Load all data
+        async function loadData() {
+            if (!contract) {
+                showError('Please update CONTRACT_ADDRESS in the code');
+                return;
+            }
+
+            try {
+                await Promise.all([
+                    loadQuestions(),
+                    loadStats(),
+                    loadResponses()
+                ]);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Error loading data: ' + error.message);
+            }
+        }
+
+        // Load questions
+        async function loadQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading surveys...</div>';
+
+            try {
+                const questions = await contract.getQuestions();
+                
+                if (questions.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                            <h3>No surveys available</h3>
+                            <p>Create a survey to get started</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const hasParticipated = await contract.hasParticipated(userAccount);
+                
+                container.innerHTML = questions.map((question, index) => `
+                    <div class="question-item">
+                        <div class="question-text">${question}</div>
+                        <div class="question-id">Survey ID: ${index + 1}</div>
+                        ${!hasParticipated ? `
+                            <div style="margin-top: 1rem;">
+                                <textarea 
+                                    class="form-input" 
+                                    id="response-${index + 1}" 
+                                    placeholder="Enter your response..."
+                                    style="margin-bottom: 0.5rem;"
+                                ></textarea>
+                                <button class="btn btn-primary" onclick="participateInSurvey(${index + 1})">
+                                    Submit Response
+                                </button>
+                            </div>
+                        ` : '<p style="color: #10b981; margin-top: 1rem;">✅ You have already participated</p>'}
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = '<div class="error">Error loading surveys: ' + error.message + '</div>';
+            }
+        }
+
+        // Participate in survey
+        async function participateInSurvey(questionId) {
+            const responseInput = document.getElementById(`response-${questionId}`);
+            const response = responseInput.value.trim();
+
+            if (!response) {
+                showError('Please enter a response');
+                return;
+            }
+
+            try {
+                showLoading('Submitting response...');
+                const tx = await contract.participate(response, questionId);
+                await tx.wait();
+                showSuccess('Response submitted successfully!');
+                await loadData();
+            } catch (error) {
+                console.error('Participation error:', error);
+                showError('Error submitting response: ' + error.message);
+            }
+        }
+
+        // Create survey
+        async function createSurvey(event) {
+            event.preventDefault();
+            
+            if (!contract) {
+                showError('Please connect your wallet first');
+                return;
+            }
+
+            const question = document.getElementById('surveyQuestion').value.trim();
+            if (!question) {
+                showError('Please enter a survey question');
+                return;
+            }
+
+            try {
+                showLoading('Creating survey...');
+                const tx = await contract.createSurvey(question);
+                await tx.wait();
+                
+                document.getElementById('surveyQuestion').value = '';
+                showSuccess('Survey created successfully!');
+                await loadData();
+            } catch (error) {
+                console.error('Survey creation error:', error);
+                showError('Error creating survey: ' + error.message);
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const [totalParticipants, questions, owner] = await Promise.all([
+                    contract.totalParticipants(),
+                    contract.getQuestions(),
+                    contract.owner()
+                ]);
+
+                document.getElementById('totalParticipants').textContent = totalParticipants.toString();
+                document.getElementById('totalSurveys').textContent = questions.length.toString();
+                document.getElementById('contractOwner').textContent = `${owner.slice(0, 6)}...${owner.slice(-4)}`;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load responses (owner only)
+        async function loadResponses() {
+            const container = document.getElementById('responsesContainer');
+            
+            try {
+                const owner = await contract.owner();
+                if (userAccount.toLowerCase() !== owner.toLowerCase()) {
+                    container.innerHTML = '<div class="error">Only the contract owner can view responses</div>';
+                    return;
+                }
+
+                container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading responses...</div>';
+
+                const participants = await contract.getParticipants();
+                
+                if (participants.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <h3>No responses yet</h3>
+                            <p>Responses will appear here once users participate</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const responses = await Promise.all(
+                    participants.map(async (participant) => {
+                        const response = await contract.getResponseOfParticipant(participant);
+                        return { participant, response };
+                    })
+                );
+
+                container.innerHTML = responses.map(({ participant, response }) => `
+                    <div class="response-item">
+                        <div class="participant-address">${participant}</div>
+                        <div class="response-text">${response}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = '<div class="error">Error loading responses: ' + error.message + '</div>';
+            }
+        }
+
+        // Utility functions
+        function showError(message) {
+            const existing = document.querySelector('.error');
+            if (existing) existing.remove();
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').prepend(errorDiv);
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const existing = document.querySelector('.success');
+            if (existing) existing.remove();
+            
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.querySelector('.container').prepend(successDiv);
+            
+            setTimeout(() => successDiv.remove(), 5000);
+        }
+
+        function showLoading(message) {
+            // Implementation would show a loading overlay
+            console.log(message);
+        }
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    updateWalletStatus(false);
+                } else {
+                    location.reload();
+                }
+            });
+
+            window.ethereum.on('chainChanged', () => {
+                location.reload();
+            });
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
