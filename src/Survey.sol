@@ -35,19 +35,23 @@ contract Survey {
     function getParticipants() external view onlyOwner returns (address[] memory) {
         return participants;
     }
-    function getResponse(address participant) external view onlyOwner returns (string memory) {
-        require(hasParticipated[participant], "Participant has not responded");
-        return responses[participant];
+    function getResponseQuestionAnswer(uint256 _questionId) external view onlyOwner returns (string memory) {
+        return questionResponses[idToQuestion[_questionId]];
     }
-    function createSurvey(string memory question) external {
+    function createSurvey(string memory question) external returns (uint256) {
         // Logic to create a new survey can be added here
         // For simplicity, this function currently does nothing
         questionId++;
         questions.push(question);
         idToQuestion[questionId] = question;
+        return questionId;
     }
     function getQuestions() external view returns (string[] memory) {
         return questions;
+    }
+    function getResponseOfParticipant(address participant) external view onlyOwner returns (string memory) {
+        require(hasParticipated[participant], "Participant has not responded");
+        return responses[participant];
     }
 
     
