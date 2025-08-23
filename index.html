@@ -1227,7 +1227,7 @@
         // Add CSV download button if we have responses
         if (responsesData.length > 0) {
             const csv = convertToCSV(responsesData);
-            html += `<button onclick='downloadCSV(\`${csv}\`, "survey_${surveyId}.csv")'>⬇ Download CSV</button>`;
+            html += `<button class="section-icon" style="width: 60%" onclick='downloadCSV(\`${csv}\`, "survey_${surveyId}.csv")'>⬇ Download CSV</button>`;
         }
 
         document.getElementById('ownerResults').innerHTML = html;
