@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 contract Survey {
 
-   mapping(address => bool) public hasParticipated;
+//    mapping(address => bool) public hasParticipated;
+   mapping(uint256 => mapping (address => bool)) public idToParticipant;
    mapping(address => string) public responses;
    address[] public participants;
    string[] public questions;
@@ -24,8 +25,9 @@ contract Survey {
         _;
     }
     function participate(string memory response,uint256 _questionId) external {
-        require(!hasParticipated[msg.sender], "Already participated");
-        hasParticipated[msg.sender] = true;
+        require(!idToParticipant[_questionId] [msg.sender], "Already participated");
+        idToParticipant[_questionId][msg.sender] = true;
+        // hasParticipated[msg.sender] = true;
         responses[msg.sender] = response;
         questionResponses[idToQuestion[_questionId]] = response;
         idToResponse[_questionId] = response;
@@ -39,9 +41,8 @@ contract Survey {
         return questionResponses[idToQuestion[_questionId]];
     }
     function createSurvey(string memory question) external returns (uint256) {
-        // Logic to create a new survey can be added here
-        // For simplicity, this function currently does nothing
-        questionId++;
+
+        questionId = random(10000);
         questions.push(question);
         idToQuestion[questionId] = question;
         return questionId;
@@ -49,10 +50,23 @@ contract Survey {
     function getQuestions() external view returns (string[] memory) {
         return questions;
     }
-    function getResponseOfParticipant(address participant) external view onlyOwner returns (string memory) {
-        require(hasParticipated[participant], "Participant has not responded");
+    function getResponseOfParticipant(address participant,uint256 _questionId) external view onlyOwner returns (string memory) {
+        require(idToParticipant[_questionId][participant], "Participant has not responded");
         return responses[participant];
     }
-
+  function random(uint256 max) internal view returns (uint256) {
+        uint256 nonce = totalParticipants; // Use totalParticipants as a nonce
+        // This is pseudo-random, not secure!
+        return uint256(
+            keccak256(
+                abi.encodePacked(
+                    block.timestamp,
+                    block.prevrandao, // replaces block.difficulty after merge
+                    msg.sender,
+                    nonce
+                )
+            )
+        ) % max;
+    }
     
 }
