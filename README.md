@@ -1,66 +1,143 @@
-## Foundry
-forge script script/DeploySurvey.s.sol:DeploySurvey --rpc-url http://127.0.0.1:8545 --private-key 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d --broadcast
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Perfect 👍 Since you’re using **Foundry**, here’s a tailored `README.md` for your project with Foundry setup and commands included:
 
-Foundry consists of:
+---
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+# 🗳️ Decentralized Survey dApp
 
-## Documentation
+A blockchain-based **survey application** built with Solidity.
+This dApp allows users to **create surveys**, **participate in them**, and **download responses in CSV format** — all in a **decentralized, trustless way**.
 
-https://book.getfoundry.sh/
+---
 
-## Usage
+## ✨ Features
 
-### Build
+* **Create Surveys** – Owner can publish new survey questions.
+* **One Response per Participant** – Each wallet address can only respond once per survey.
+* **On-Chain Transparency** – All questions and responses are stored securely on-chain.
+* **CSV Export** – Frontend allows exporting survey data to CSV for analysis.
+* **Owner-Restricted Access** – Only the owner can see participant details and responses.
 
-```shell
-$ forge build
+---
+
+## 🛠️ Tech Stack
+
+* **Smart Contracts**: Solidity (`^0.8.0`)
+* **Development Framework**: [Foundry](https://book.getfoundry.sh/)
+* **Frontend**: HTML + JavaScript + Ethers.js
+* **Blockchain**: Ethereum (works on Sepolia/Goerli testnets or local anvil)
+
+---
+
+## 📜 Smart Contract Overview
+
+```solidity
+function createSurvey(string memory question) external returns (uint256)
 ```
 
-### Test
+Create a new survey with a question. Returns a randomly generated `questionId`.
 
-```shell
-$ forge test
+```solidity
+function participate(string memory response, uint256 _questionId) external
 ```
 
-### Format
+Submit a response to a given survey question. Each address can only respond once.
 
-```shell
-$ forge fmt
+```solidity
+function getQuestions() external view returns (string[] memory)
 ```
 
-### Gas Snapshots
+Retrieve all survey questions.
 
-```shell
-$ forge snapshot
+```solidity
+function getResponseOfParticipant(address participant, uint256 _questionId) external view onlyOwner
 ```
 
-### Anvil
+Get a participant’s response for a survey.
 
-```shell
-$ anvil
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/decentralized-survey-dapp.git
+cd decentralized-survey-dapp
 ```
 
-### Deploy
+### 2. Install Foundry
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+If you don’t have Foundry installed:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
 
-### Cast
+### 3. Build the Contracts
 
-```shell
-$ cast <subcommand>
+```bash
+forge build
 ```
 
-### Help
+### 4. Run Tests
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+```bash
+forge test
 ```
+
+### 5. Deploy Locally (with Anvil)
+
+Start a local Ethereum node:
+
+```bash
+anvil
+```
+
+Deploy the contract:
+
+```bash
+forge create --rpc-url http://127.0.0.1:8545 \
+    --private-key <YOUR_PRIVATE_KEY> \
+    src/Survey.sol:Survey
+```
+
+### 6. Interact with the Contract
+
+* Connect with **Ethers.js** or **Cast (Foundry CLI)**
+* Example: call `createSurvey` with Cast
+
+```bash
+cast send <CONTRACT_ADDRESS> "createSurvey(string)" "What is your favorite programming language?" \
+    --rpc-url http://127.0.0.1:8545 \
+    --private-key <YOUR_PRIVATE_KEY>
+```
+
+---
+
+## 📊 CSV Export
+
+The frontend supports **downloading responses as a CSV file**.
+This makes results portable for Excel, Google Sheets, or feeding into AI tools.
+
+---
+
+## 🔮 Roadmap
+
+* 🤖 **AI Insights** – Automatic summaries, sentiment analysis, and trends.
+* 🎁 **Token Rewards** – Incentivize participants with tokens.
+* 📋 **Multi-Question Surveys** – Support for structured forms.
+* 🔐 **Privacy Enhancements** – zk-SNARKs / off-chain encrypted storage.
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome! Fork the repo, create a branch, and open a PR.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
