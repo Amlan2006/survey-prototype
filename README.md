@@ -61,8 +61,8 @@ Get a participant’s response for a survey.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/decentralized-survey-dapp.git
-cd decentralized-survey-dapp
+git clone https://github.com/your-username/survey-prototype.git
+cd survey-prototype
 ```
 
 ### 2. Install Foundry
