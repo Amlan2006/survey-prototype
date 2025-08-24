@@ -1,6 +1,3 @@
-Perfect 👍 Since you’re using **Foundry**, here’s a tailored `README.md` for your project with Foundry setup and commands included:
-
----
 
 # 🗳️ Decentralized Survey dApp
 
